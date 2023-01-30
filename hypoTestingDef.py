@@ -20,13 +20,13 @@ def main():
     rangeX = [-7, 22]
     plotRes = 1000
 
-#    muSigNull = [0.0, 1.8]
-#    muSigAlt  = [5.9, 2.5]
-#    dataLoc = 2.4
-
-    muSigNull = [0.0, 3.5]
-    muSigAlt  = [8.0, 0.5]
+    muSigNull = [0.0, 1.8]
+    muSigAlt  = [5.9, 2.5]
     dataLoc = 2.4
+
+#    muSigNull = [0.0, 3.5]
+#    muSigAlt  = [8.0, 0.5]
+#    dataLoc = 2.4
 ###########################################################################################
     qVal     = np.linspace(*rangeX, plotRes)
     baseline = qVal*0.0
@@ -38,7 +38,7 @@ def main():
     qVal_PVsel = (qVal > dataLoc)           #PV for p-value
     qVal_PSsel = (qVal > qAlpha)            #PS for power/sensitivity
 #plots
-    fig = plt.figure(figsize=(14, 7))
+    fig = plt.figure(figsize=(15, 7))
     gs = gridspec.GridSpec(1, 1)
     ax0 = fig.add_subplot(gs[0])
     
@@ -63,9 +63,10 @@ def main():
     PSfill = ax0.fill_between(qVal[qVal_PSsel], baseline[qVal_PSsel], gausAlt[qVal_PSsel],\
                               color="none", alpha=0.5, hatch="\\\\\\", edgecolor='red') 
     blank = ax0.axvline(x=dataLoc, ymin=0.0, ymax=1.0, color="black", alpha=0.0)
-    plotList = [[nullDist, altDist, dataLine, CRfill, PVFill, PSfill, blank], \
-                ["P(q|$\mu$=$\mu_s$) with q for signal null hypothesis",\
-                 "P(q|$\mu$=$\mu_0$) with q for no-signal alternative hypothesis", 
+    plotList = [[blank, nullDist, altDist, dataLine, CRfill, PVFill, PSfill, blank], \
+                ["With q defined via signal_null/no-signal_alternative hypothesis",\
+                 "P$_{null}$(q|$\mu$=$\mu_s$)",\
+                 "P$_{alt}$(q|$\mu$=$\mu_0$)", 
                  "q($\hat{\mu}_{data}$),\n"+\
                  "$\hat{\mu}_{data}$: parameters $\mu$ as fit to observed data",
                  "P(q>q$_\\alpha$|$\mu_s$) $\equiv \\alpha$,\n"+\
@@ -73,8 +74,10 @@ def main():
                  "P(q>q($\hat{\mu}_{data}$)|$\mu_s$) $\equiv$ p$_\mu$,\np$_\mu$: p-value",\
                  "P(q>q($\hat{\mu}_{data}$)|$\mu_0$) $\equiv$ M_$\mu_0$($\mu_s$),\n"+\
                  "M_$\mu_0$($\mu_s$): power/sensitivity",\
-                 "\nP(q$_d$|$\mu$=$\mu_0$) $\equiv \\beta$ with q for "+\
-                 "no-signal null hypothesis,\nq$_d$: discovery potential"]]
+                 "\nWith q defined via no-signal_null/signal_alternative hypothesis\n"+\
+                 "P(q<q$_d$|$\mu$=$\mu_s$) $\equiv \\beta$, with $\\beta$ set to 0.05"+\
+                 " (1-$\\beta$ is also power),\n"+\
+                 "q$_d$: $\mu$ is the discovery potential s.t. q($\mu$)=q_d"]]
     legObj = ax0.legend(*plotList, loc="upper right", fontsize=12)
 
     ylim = ax0.get_ylim()
