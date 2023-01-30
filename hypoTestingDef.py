@@ -19,10 +19,15 @@ def main():
     verbosity = 1
     rangeX = [-7, 22]
     plotRes = 1000
-    muSigNull = [0.0, 1.8]
-    muSigAlt  = [5.9, 2.5]
-    dataLoc = 2.4
 
+#    muSigNull = [0.0, 1.8]
+#    muSigAlt  = [5.9, 2.5]
+#    dataLoc = 2.4
+
+    muSigNull = [0.0, 3.5]
+    muSigAlt  = [8.0, 0.5]
+    dataLoc = 2.4
+###########################################################################################
     qVal     = np.linspace(*rangeX, plotRes)
     baseline = qVal*0.0
     gausNull = gaussian(*muSigNull, qVal)
@@ -31,7 +36,7 @@ def main():
     qAlpha = muSigNull[0]+2*muSigNull[1]    #2 sigma-significance
     qVal_CRsel = (qVal > qAlpha)            #CR for critical region
     qVal_PVsel = (qVal > dataLoc)           #PV for p-value
-    qVal_PSsel = (qVal > qAlpha)           #PS for power/sensitivity
+    qVal_PSsel = (qVal > qAlpha)            #PS for power/sensitivity
 #plots
     fig = plt.figure(figsize=(14, 7))
     gs = gridspec.GridSpec(1, 1)
@@ -56,7 +61,7 @@ def main():
     PVFill = ax0.fill_between(qVal[qVal_PVsel], baseline[qVal_PVsel], gausNull[qVal_PVsel],\
                               color="none", hatch="///", edgecolor='blue')
     PSfill = ax0.fill_between(qVal[qVal_PSsel], baseline[qVal_PSsel], gausAlt[qVal_PSsel],\
-                              color="none", alpha=0.5, hatch="...", edgecolor='red') 
+                              color="none", alpha=0.5, hatch="\\\\\\", edgecolor='red') 
     blank = ax0.axvline(x=dataLoc, ymin=0.0, ymax=1.0, color="black", alpha=0.0)
     plotList = [[nullDist, altDist, dataLine, CRfill, PVFill, PSfill, blank], \
                 ["P(q|$\mu$=$\mu_s$) with q for signal null hypothesis",\
