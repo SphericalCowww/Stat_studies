@@ -14,7 +14,7 @@ from scipy import optimize
 from scipy import stats
 from tqdm import tqdm
 
-###########################################################################################
+#####################################################################################################
 def main():
     verbosity = 1
     rangeX = [-7, 22]
@@ -27,7 +27,7 @@ def main():
 #    muSigNull = [0.0, 3.5]
 #    muSigAlt  = [8.0, 0.5]
 #    dataLoc = 2.4
-###########################################################################################
+#####################################################################################################
     qVal     = np.linspace(*rangeX, plotRes)
     baseline = qVal*0.0
     gausNull = gaussian(*muSigNull, qVal)
@@ -64,20 +64,19 @@ def main():
                               color="none", alpha=0.5, hatch="\\\\\\", edgecolor='red') 
     blank = ax0.axvline(x=dataLoc, ymin=0.0, ymax=1.0, color="black", alpha=0.0)
     plotList = [[blank, nullDist, altDist, dataLine, CRfill, PVFill, PSfill, blank], \
-                ["With q defined via signal_null/no-signal_alternative hypothesis",\
+                ["With q defined via signal_null/no-signal_alternative hypothesis:",\
                  "P$_{null}$(q|$\mu$=$\mu_s$)",\
                  "P$_{alt}$(q|$\mu$=$\mu_0$)", 
                  "q($\hat{\mu}_{data}$),\n"+\
                  "$\hat{\mu}_{data}$: parameters $\mu$ as fit to observed data",
-                 "P(q>q$_\\alpha$|$\mu_s$) $\equiv \\alpha$,\n"+\
+                 "P$_{null}$(q>q$_\\alpha$|$\mu_s$) $\equiv \\alpha$,\n"+\
                  "q$_\\alpha$: critical value, $\\alpha$: significance set to 0.05",\
-                 "P(q>q($\hat{\mu}_{data}$)|$\mu_s$) $\equiv$ p$_\mu$,\np$_\mu$: p-value",\
-                 "P(q>q($\hat{\mu}_{data}$)|$\mu_0$) $\equiv$ M_$\mu_0$($\mu_s$),\n"+\
+                 "P$_{null}$(q>q($\hat{\mu}_{data}$)|$\mu_s$) $\equiv$ p$_\mu$,\np$_\mu$: p-value",\
+                 "P$_{alt}$(q>q($\hat{\mu}_{data}$)|$\mu_0$) $\equiv$ M_$\mu_0$($\mu_s$),\n"+\
                  "M_$\mu_0$($\mu_s$): power/sensitivity",\
-                 "\nWith q defined via no-signal_null/signal_alternative hypothesis\n"+\
-                 "P(q<q$_d$|$\mu$=$\mu_s$) $\equiv \\beta$, with $\\beta$ set to 0.05"+\
-                 " (1-$\\beta$ is also power),\n"+\
-                 "q$_d$: $\mu$ is the discovery potential s.t. q($\mu$)=q_d"]]
+                 "\nWith q defined via no-signal_null/signal_alternative hypothesis: \n"+\
+                 "$\mu_d$ is the discovery potential s.t."+\
+                 "P$_{null}$(q>q($\mu_d$)|$\mu$=$\mu_0$) $\equiv \\alpha$ = 0.05"]]
     legObj = ax0.legend(*plotList, loc="upper right", fontsize=12)
 
     ylim = ax0.get_ylim()
@@ -91,7 +90,7 @@ def main():
     plt.savefig(filenameFig)
     if verbosity >= 1: print("Creating the following files:\n" + filenameFig)
 
-#################################################@#########################################
+#####################################################################################################
 TOLERANCE = pow(10.0, -10)
 SNUMBER   = pow(10.0, -124)
 def gaussian(mu, sig, x):
@@ -100,7 +99,7 @@ def gaussian(mu, sig, x):
          *(1.0/(sig*np.sqrt(2.0*np.pi)))
     vals[vals < SNUMBER] = SNUMBER
     return vals
-###########################################################################################
+#####################################################################################################
 if __name__ == "__main__":
     print("\n####################################################################Head")
     main()
