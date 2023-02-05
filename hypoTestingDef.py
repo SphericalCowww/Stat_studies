@@ -20,13 +20,28 @@ def main():
     rangeX = [-7, 22]
     plotRes = 1000
 
+    '''
     muSigNull = [0.0, 1.8]
     muSigAlt  = [5.9, 2.5]
     dataLoc = 2.4
+    rangeX = [-7, 22]
+    '''
 
-#    muSigNull = [0.0, 3.5]
-#    muSigAlt  = [8.0, 0.5]
-#    dataLoc = 2.4
+    '''
+    muSigNull = [0.0, 3.5]
+    muSigAlt  = [8.0, 0.5]
+    dataLoc = 2.4
+    rangeX = [-7, 22]
+    '''
+
+    trueSignalN = 2
+    backgroundN = 10
+    signalN     = 5
+    muSigNull = [-(backgroundN+signalN), np.sqrt(backgroundN+signalN)]
+    muSigAlt  = [-backgroundN, np.sqrt(backgroundN)]
+    dataLoc = -(backgroundN)
+    rangeX = [-2.5*backgroundN, 2*backgroundN]
+
 #####################################################################################################
     qVal     = np.linspace(*rangeX, plotRes)
     baseline = qVal*0.0
@@ -54,16 +69,15 @@ def main():
     ax0.set_xlim(*rangeX)
     ax0.set_ylim(bottom=0.0)    
 
-    dataLine = ax0.axvline(x=dataLoc, ymin=0.0, ymax=1.0, color="black", linewidth=2,\
-                           linestyle="--")
+    dataLine = ax0.axvline(x=dataLoc, ymin=0.0, ymax=1.0, color="black", linewidth=2, linestyle="--")
     CRfill = ax0.fill_between(qVal[qVal_CRsel], baseline[qVal_CRsel], gausNull[qVal_CRsel],\
                               color="blue", alpha=0.5, zorder=0)
-    PVFill = ax0.fill_between(qVal[qVal_PVsel], baseline[qVal_PVsel], gausNull[qVal_PVsel],\
+    PVfill = ax0.fill_between(qVal[qVal_PVsel], baseline[qVal_PVsel], gausNull[qVal_PVsel],\
                               color="none", hatch="///", edgecolor='blue')
     PSfill = ax0.fill_between(qVal[qVal_PSsel], baseline[qVal_PSsel], gausAlt[qVal_PSsel],\
                               color="none", alpha=0.5, hatch="\\\\\\", edgecolor='red') 
     blank = ax0.axvline(x=dataLoc, ymin=0.0, ymax=1.0, color="black", alpha=0.0)
-    plotList = [[blank, nullDist, altDist, dataLine, CRfill, PVFill, PSfill, blank], \
+    plotList = [[blank, nullDist, altDist, dataLine, CRfill, PVfill, PSfill, blank], \
                 ["With q defined via signal_null/no-signal_alternative hypothesis:",\
                  "P$_{null}$(q|$\mu$=$\mu_s$)",\
                  "P$_{alt}$(q|$\mu$=$\mu_0$)", 
@@ -72,8 +86,8 @@ def main():
                  "P$_{null}$(q>q$_\\alpha$|$\mu_s$) $\equiv \\alpha$,\n"+\
                  "q$_\\alpha$: critical value, $\\alpha$: significance set to 0.05",\
                  "P$_{null}$(q>q($\hat{\mu}_{data}$)|$\mu_s$) $\equiv$ p$_\mu$,\np$_\mu$: p-value",\
-                 "P$_{alt}$(q>q($\hat{\mu}_{data}$)|$\mu_0$) $\equiv$ M_$\mu_0$($\mu_s$),\n"+\
-                 "M_$\mu_0$($\mu_s$): power/sensitivity",\
+                 "P$_{alt}$(q>q($\hat{\mu}_{data}$)|$\mu_0$) $\equiv$ M_$\mu_0$($\mu_s$)"+\
+                 "$\equiv$ 1-$\\beta$,\nM_$\mu_0$($\mu_s$): power/sensitivity",\
                  "\nWith q defined via no-signal_null/signal_alternative hypothesis: \n"+\
                  "$\mu_d$ is the discovery potential s.t."+\
                  "P$_{null}$(q>q($\mu_d$)|$\mu$=$\mu_0$) $\equiv \\alpha$ = 0.05"]]
