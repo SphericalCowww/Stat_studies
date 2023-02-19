@@ -104,12 +104,12 @@ def main():
 
     plotList = [[nullDist, altDist, detLine, meanLineSideL, CRfill, PVfill, PSfill, meanLineFill], \
                 ["P$_{null}$(q|$\mu$=$\mu_s$)",\
-                 "P$_{alt}$(q|$\mu$=$\mu_0$)",\
+                 "P$_{alt}$(q|$\mu$=$\mu_0$),\nDETERMINES the statistics",\
                  "q($\hat{\mu}_{data}$) = q$_\\alpha$",\
                  "mean(P$_{null}$)",\
                  "$\\alpha$="+str(round(1.0-stats.norm.cdf(1.0), 5))+" (1$\\sigma$)",\
                  "p-value",\
-                 "power",\
+                 "power, value FIXED",\
                  "Brazilian band\n(sensitivity)"]]
     legObj = ax[axIdx].legend(*plotList, loc="upper right", fontsize=12)
 
