@@ -92,7 +92,7 @@ def main():
                  "q$_\\alpha$: critical value, "+\
                  "$\\alpha$: significance/size/false positive/type-I error",\
                  "P$_{null}$(q>q($\hat{\mu}_{data}$)|$\mu_s$) $\equiv$ p$_\mu$,\np$_\mu$: p-value",\
-                 "P$_{alt}$(q>q$_\\alpha$)|$\mu_0$) $\equiv$ M$_{\mu_0}$($\mu_s$)"+\
+                 "P$_{alt}$(q>q$_\\alpha$|$\mu_0$) $\equiv$ M$_{\mu_0}$($\mu_s$)"+\
                  "$\equiv$ 1-$\\beta$,\nM$_{\mu_0}$($\mu_s$): power/sensitivity, "+\
                  "$\\beta$: false negative/type-II error",\
                  "P$_{alt}$(q<q($\hat{\mu}_{data}$)|$\mu_0$) $\equiv$ p$_0$,\n"+\
