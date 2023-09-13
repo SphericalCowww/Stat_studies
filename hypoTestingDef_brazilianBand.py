@@ -253,7 +253,7 @@ def main():
     plotList = [[nullDist, detLine, alphaLineSideL, CRfill, PVfill, alphaLineFill], \
                 ["P$_{null}$(q|$\mu$=$\mu_0$)",\
                  "q($\hat{\mu}_{data}$) = q$_\\alpha$",\
-                 "mean(P$_{null}$)",\
+                 "3$\\sigma$ and 1$\\sigma$ from mean(P$_{null}$)",\
                  "$\\alpha$="+str(round(1.0-stats.norm.cdf(2.0), 5))+" (2$\\sigma$)",\
                  "p-value",\
                  "Brazilian band\n(discovery potential)"]]
