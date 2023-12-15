@@ -2,9 +2,9 @@ import os, sys, pathlib, time, re, glob, math, copy
 from datetime import datetime
 import warnings
 def warning_on_one_line(message, category, filename, lineno, file=None, line=None):
-    return '%s:%s: %s: %s\n' % (filename, lineno, category.__name__, message)
+    return "%s:%s: %s: %s\n" % (filename, lineno, category.__name__, message)
 warnings.formatwarning = warning_on_one_line
-warnings.filterwarnings('ignore', category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -46,70 +46,91 @@ def main():
 
     dataMu  = 1.0
     dataSig = 2.0
-    dataN   = 100000000
+    dataN   = 10000#100000000
     fitRange = [-4.0, 6.0]
 
     chi2_templateN = 10000
     rangeChi2 = [0, 6.0]
+    pValN = 2001
+    pValbinN = 100#max(1, int(pValN/10.0))
 
-    dataSamp = np.random.normal(dataMu, dataSig, dataN)
     xVals   = np.linspace(*rangeX, binN+1)[:-1]
     binSize = xVals[1] - xVals[0]
-    dataHist = np.histogram(dataSamp, bins=binN, range=rangeX)[0]   #bin2left  
-
     fitRangeMask = ((fitRange[0] <= xVals)&(xVals < fitRange[1]))
-    dataHistErr = [count if count > 0 else 1 for count in dataHist]
-
     initPars = [(1.0*dataN)/binN, dataMu, dataSig]
-    costFunc = iminuit.cost.LeastSquares(xVals, dataHist, dataHistErr, gaus_scipy)
-    costFunc.mask = fitRangeMask
-    objMinuit = iminuit.Minuit(costFunc, *initPars)
-    objMinuit.limits[1] = [-2.0, 2.0]
-    objMinuit.limits[2] = [0.0, 10.0]
-    optResult = objMinuit.migrad()
 
-    fitPars = [val for val in optResult.values]
-    fitErrs = [err for err in optResult.errors]
-    fitCov  = [row for row in optResult.covariance]
-    print('Multipeak fit:'); print(optResult)
+    chi2Vals = np.linspace(*rangeChi2, 4*binN+1)[:-1]
+    pValVals = np.linspace(0.0, 1.0, pValbinN+1)[:-1]
 
-    chi2Vals = np.linspace(*rangeChi2, binN+1)[:-1]
+    chi2_template_poisson_binned_pVals = []
+    for pValIter in tqdm(range(pValN)):
+        dataSamp = np.random.normal(dataMu, dataSig, dataN)
+        dataHist = np.histogram(dataSamp, bins=binN, range=rangeX)[0]   #bin2left  
+        dataHistErr = [count if count > 0 else 1 for count in dataHist]
 
-    fitHist = gaus_scipy(xVals, *fitPars)
-    ndof = binN + len(fitPars) - 1
-    chi2_ndofs           = optResult.fmin.reduced_chi2 #optResult.fval/optResult.ndof    # official
-    chi2_multinominal    = iminuit.cost.multinominal_chi2(dataHist, fitHist)/ndof
-    chi2_poisson         = iminuit.cost.poisson_chi2(     dataHist, fitHist)/ndof
-    chi2_poisson_binned  = eval_binnedPoisson_chi2(       dataHist, fitHist)/ndof
-    chi2_poisson_binnedL = eval_binnedPoisson_chi2L(      dataHist, fitHist)/ndof
+        costFunc = iminuit.cost.LeastSquares(xVals, dataHist, dataHistErr, gaus_scipy)
+        costFunc.mask = fitRangeMask
+        objMinuit = iminuit.Minuit(costFunc, *initPars)
+        objMinuit.limits[1] = [-2.0, 2.0]
+        objMinuit.limits[2] = [0.0, 10.0]
+        optResult = objMinuit.migrad()
 
-    chi2_template_poisson_binnedL_temp, chi2_template_poisson_binnedL = [], []
-    chi2_template_poisson_binnedL = []
-    
-    for templateIdx in tqdm(range(chi2_templateN)):
-        shuffledHist = poissonShuffle(fitHist)
-        chi2_template_poisson_binnedL_temp.append(shuffledHist)
-        # NOTE: the following definition of template is vital to validate the p-value
-        chi2_template_poisson_binnedL.append(eval_binnedPoisson_chi2(shuffledHist, fitHist)/ndof)
-    chi2_template_poisson_binnedL_hist = np.histogram(chi2_template_poisson_binnedL,\
-                                                      bins=binN, range=rangeChi2)[0] 
+        fitPars = [val for val in optResult.values]
+        fitErrs = [err for err in optResult.errors]
+        fitCov  = [row for row in optResult.covariance]
+        print("Multipeak fit:"); print(optResult)
+
+        fitHist = gaus_scipy(xVals, *fitPars)
+        ndof = binN + len(fitPars) - 1
+        '''
+        chi2_ndofs           = optResult.fmin.reduced_chi2 #optResult.fval/optResult.ndof # official
+        chi2_multinominal    = iminuit.cost.multinominal_chi2(dataHist, fitHist)/ndof
+        chi2_poisson         = iminuit.cost.poisson_chi2(     dataHist, fitHist)/ndof
+        chi2_poisson_binned  = eval_binnedPoisson_chi2(       dataHist, fitHist)/ndof
+        chi2_poisson_binnedL = eval_binnedPoisson_chi2L(dataHist, fitHist)/ndof
+        '''
+        chi2_poisson_binned = eval_binnedPoisson_chi2(dataHist, fitHist)/ndof
+        if 1 == 1:#pValIter == 0:
+            chi2_template_poisson_binned_temp, chi2_template_poisson_binned = [], []
+            for templateIdx in tqdm(range(chi2_templateN)):
+                shuffledHist = poissonShuffle(fitHist)
+                chi2_template_poisson_binned_temp.append(shuffledHist)
+                # NOTE: the following definition of template is vital to validate the p-value
+                chi2_template_poisson_binned.append(eval_binnedPoisson_chi2(shuffledHist,fitHist)\
+                                                    /ndof)
+            chi2_template_poisson_binned_hist = np.histogram(chi2_template_poisson_binned,\
+                                                              bins=4*binN, range=rangeChi2)[0]
+        pValmask = (chi2_template_poisson_binned > chi2_poisson_binned)
+        chi2_template_poisson_binned_pVals.append(np.sum(pValmask)/chi2_templateN)
+        print("p-value =", chi2_template_poisson_binned_pVals[-1], '\n')
+        pVal_hist = np.histogram(chi2_template_poisson_binned_pVals,\
+                                 bins=pValbinN, range=[0.0, 1.0])[0]
+        if (pValIter+1)%100 == 0:
+            plotHist(pValIter+1, verbosity, binN, dataN, chi2_templateN, \
+                     xVals, rangeX, chi2_template_poisson_binned_temp, dataHist, fitHist, fitPars,\
+                     chi2Vals, rangeChi2, chi2_template_poisson_binned_hist, chi2_poisson_binned,\
+                     pValVals, chi2_template_poisson_binned_pVals, pVal_hist)
 #####################################################################################################
+def plotHist(iterIdx, verbosity, binN, dataN, chi2_templateN,\
+             xVals, rangeX, chi2_template_poisson_binned_temp, dataHist, fitHist, fitPars,\
+             chi2Vals, rangeChi2, chi2_template_poisson_binned_hist, chi2_poisson_binned,\
+             pValVals, chi2_template_poisson_binned_pVals, pVal_hist):
 #plots
-    gridSpec = [2, 1]
+    gridSpec = [3, 1]
     figSize, marginRatio = getSizeMargin(gridSpec, subplotSize=[15.0, 7.0])
     fig = plt.figure(figsize=figSize); fig.subplots_adjust(*marginRatio)
     gs = gridspec.GridSpec(*gridSpec)
-    matplotlib.rc('xtick', labelsize=24)
-    matplotlib.rc('ytick', labelsize=24)
+    matplotlib.rc("xtick", labelsize=24)
+    matplotlib.rc("ytick", labelsize=24)
     ax = []
     for axIdx in range(gridSpec[0]*gridSpec[1]):
         ax.append(fig.add_subplot(gs[axIdx]));
-        ax[-1].ticklabel_format(style='sci', scilimits=(-2, 2))
+        ax[-1].ticklabel_format(style="sci", scilimits=(-2, 2))
         ax[-1].xaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
         ax[-1].yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())   
     ###plot0
     axIdx = 0
-    for template in chi2_template_poisson_binnedL_temp:
+    for template in chi2_template_poisson_binned_temp:
          ax[axIdx].plot(xVals, template, color="limegreen", drawstyle="steps-mid",\
                         linewidth=2, alpha=0.1)
     ax[axIdx].plot(xVals, dataHist, color="blue", drawstyle="steps-mid", linewidth=4)
@@ -117,34 +138,48 @@ def main():
     ax[axIdx].plot(xVals, gaus_scipy(xVals, *fitPars), linewidth=2, alpha=1.0, color="red")
     textStr = "binN = " + str(binN) + "\neventN = "+str(dataN)
     ax[axIdx].text(0.03, 1.0, textStr, fontsize=24, transform=ax[axIdx].transAxes,\
-                   color='blue', horizontalalignment='left', verticalalignment='top')
-    ax[axIdx].set_xlabel('x', fontsize=24)
-    ax[axIdx].set_ylabel('count', fontsize=24)
+                   color="blue", horizontalalignment="left", verticalalignment="top")
+    ax[axIdx].set_xlabel("x", fontsize=24)
+    ax[axIdx].set_ylabel("count", fontsize=24)
+    ax[axIdx].set_xlim(*rangeX)
     ax[axIdx].set_ylim(bottom=0)
 
     ###plot1
     axIdx = 1
     plotObj = []
-    plotObj.append(ax[axIdx].plot(chi2Vals, chi2_template_poisson_binnedL_hist, color="green",\
+    plotObj.append(ax[axIdx].plot(chi2Vals, chi2_template_poisson_binned_hist, color="green",\
                                   drawstyle="steps-post", linewidth=4)[0])
-    ax[axIdx].axvline(x=chi2_poisson_binnedL, color='red', linestyle='dashed', linewidth=3)
+    ax[axIdx].axvline(x=chi2_poisson_binned, color="red", linestyle="dashed", linewidth=3)
     ax[axIdx].text(0.6, 0.92, "templateN = "+str(chi2_templateN), fontsize=24,\
-                   transform=ax[axIdx].transAxes, color='green', horizontalalignment='left',\
-                   verticalalignment='bottom')
-    ax[axIdx].set_xlabel('reduced chi2', fontsize=24)
-    ax[axIdx].set_ylabel('count', fontsize=24)
+                   transform=ax[axIdx].transAxes, color="green", horizontalalignment="left",\
+                   verticalalignment="bottom")
+    ax[axIdx].set_xlabel("reduced chi2", fontsize=24)
+    ax[axIdx].set_ylabel("count", fontsize=24)
+    ax[axIdx].set_xlim(*rangeChi2)
     ax[axIdx].set_ylim(bottom=0)
-    textStr  ="chi2/ndof = "+str(round(chi2_poisson_binnedL, 5)) + "\np-value = "
-    textStr +=str(round(np.sum(chi2_template_poisson_binnedL>chi2_poisson_binnedL)/chi2_templateN,5))
-    ax[axIdx].text(chi2_poisson_binnedL, ax[axIdx].get_ylim()[1], textStr,\
-                   fontsize=18, color='red', horizontalalignment='left', verticalalignment='bottom')
+    textStr  ="chi2/ndof = "+str(round(chi2_poisson_binned, 5)) + "\np-value = "
+    textStr +=str(round(chi2_template_poisson_binned_pVals[-1],5))
+    ax[axIdx].text(chi2_poisson_binned, ax[axIdx].get_ylim()[1], textStr,\
+                   fontsize=18, color="red", horizontalalignment="left", verticalalignment="bottom")
+
+    ###plot2
+    axIdx = 2
+    ax[axIdx].plot(pValVals, pVal_hist, color="red", drawstyle="steps-mid", linewidth=4)
+    ax[axIdx].text(0.6, 1.0, "pValN = "+str(iterIdx), fontsize=24, transform=ax[axIdx].transAxes,\
+                   color="red", horizontalalignment="left", verticalalignment="bottom")
+    ax[axIdx].set_xlabel("p-value", fontsize=24)
+    ax[axIdx].set_ylabel("count", fontsize=24)
+    ax[axIdx].set_xlim(0.0, 1.0)
+    ax[axIdx].set_ylim(bottom=0.9)
+    ax[axIdx].set_yscale('log')
 #save plots
     exepath = os.path.dirname(os.path.abspath(__file__))
-    filenameFig = exepath + "/hypoTestingDef_chi2_pValue.png"
+    pathlib.Path(exepath+"/figures").mkdir(parents=True, exist_ok=True)
+    filenameFig = exepath + "/figures/hypoTestingDef_chi2_pValue"+str(iterIdx)+".png"
     gs.tight_layout(fig)
     plt.savefig(filenameFig)
     if verbosity >= 1: print("Creating the following files:\n" + filenameFig)
-
+    plt.close('all')
 #####################################################################################################
 TOLERANCE = pow(10.0, -10)
 SNUMBER   = pow(10.0, -124)
