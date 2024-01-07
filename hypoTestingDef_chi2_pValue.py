@@ -49,10 +49,10 @@ def main():
     dataN   = 10000#100000000
     fitRange = [-4.0, 6.0]
 
-    chi2_templateN = 10000
+    chi2_templateN = 200
     rangeChi2 = [0, 6.0]
-    pValN = 2001
-    pValbinN = 100#max(1, int(pValN/10.0))
+    pValN = 601
+    pValbinN = 40#max(1, int(pValN/10.0))
 
     xVals   = np.linspace(*rangeX, binN+1)[:-1]
     binSize = xVals[1] - xVals[0]
@@ -78,7 +78,7 @@ def main():
         fitPars = [val for val in optResult.values]
         fitErrs = [err for err in optResult.errors]
         fitCov  = [row for row in optResult.covariance]
-        print("Multipeak fit:"); print(optResult)
+        print("Fit result:"); print(optResult)
 
         fitHist = gaus_scipy(xVals, *fitPars)
         ndof = binN + len(fitPars) - 1
@@ -96,16 +96,33 @@ def main():
                 shuffledHist = poissonShuffle(fitHist)
                 chi2_template_poisson_binned_temp.append(shuffledHist)
                 # NOTE: the following definition of template is vital to validate the p-value
-                chi2_template_poisson_binned.append(eval_binnedPoisson_chi2(shuffledHist,fitHist)\
+                #chi2_template_poisson_binned.append(eval_binnedPoisson_chi2(shuffledHist, fitHist)\
+                #                                    /ndof) # doesn't work without refitting
+                shuffledHistErr = [count if count > 0 else 1 for count in shuffledHist]
+    
+                costFunc = iminuit.cost.LeastSquares(xVals, shuffledHist, shuffledHistErr,gaus_scipy)
+                costFunc.mask = fitRangeMask
+                objMinuit = iminuit.Minuit(costFunc, *initPars)
+                objMinuit.limits[1] = [-2.0, 2.0]
+                objMinuit.limits[2] = [0.0, 10.0]
+                optResult = objMinuit.migrad()
+    
+                fitPars_ = [val for val in optResult.values]
+                fitErrs_ = [err for err in optResult.errors]
+                #fitCov_  = [row for row in optResult.covariance]
+                #print("Fit result:", fitPars_)
+
+                fitHist_ = gaus_scipy(xVals, *fitPars)
+                chi2_template_poisson_binned.append(eval_binnedPoisson_chi2(shuffledHist, fitHist_)\
                                                     /ndof)
             chi2_template_poisson_binned_hist = np.histogram(chi2_template_poisson_binned,\
-                                                              bins=4*binN, range=rangeChi2)[0]
+                                                             bins=4*binN, range=rangeChi2)[0]
         pValmask = (chi2_template_poisson_binned > chi2_poisson_binned)
         chi2_template_poisson_binned_pVals.append(np.sum(pValmask)/chi2_templateN)
         print("p-value =", chi2_template_poisson_binned_pVals[-1], '\n')
         pVal_hist = np.histogram(chi2_template_poisson_binned_pVals,\
                                  bins=pValbinN, range=[0.0, 1.0])[0]
-        if (pValIter+1)%100 == 0:
+        if (pValIter == 0) or ((pValIter+1)%10 == 0):
             plotHist(pValIter+1, verbosity, binN, dataN, chi2_templateN, \
                      xVals, rangeX, chi2_template_poisson_binned_temp, dataHist, fitHist, fitPars,\
                      chi2Vals, rangeChi2, chi2_template_poisson_binned_hist, chi2_poisson_binned,\
@@ -157,8 +174,8 @@ def plotHist(iterIdx, verbosity, binN, dataN, chi2_templateN,\
     ax[axIdx].set_ylabel("count", fontsize=24)
     ax[axIdx].set_xlim(*rangeChi2)
     ax[axIdx].set_ylim(bottom=0)
-    textStr  ="chi2/ndof = "+str(round(chi2_poisson_binned, 5)) + "\np-value = "
-    textStr +=str(round(chi2_template_poisson_binned_pVals[-1],5))
+    textStr  = "chi2/ndof = "+str(round(chi2_poisson_binned, 5)) + "\np-value = "
+    textStr += str(round(chi2_template_poisson_binned_pVals[-1],5))
     ax[axIdx].text(chi2_poisson_binned, ax[axIdx].get_ylim()[1], textStr,\
                    fontsize=18, color="red", horizontalalignment="left", verticalalignment="bottom")
 
@@ -171,7 +188,7 @@ def plotHist(iterIdx, verbosity, binN, dataN, chi2_templateN,\
     ax[axIdx].set_ylabel("count", fontsize=24)
     ax[axIdx].set_xlim(0.0, 1.0)
     ax[axIdx].set_ylim(bottom=0.9)
-    ax[axIdx].set_yscale('log')
+    #ax[axIdx].set_yscale('log')
 #save plots
     exepath = os.path.dirname(os.path.abspath(__file__))
     pathlib.Path(exepath+"/figures").mkdir(parents=True, exist_ok=True)
